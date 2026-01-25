@@ -8,33 +8,54 @@ This MCP server enables Supabase CLI operations from any directory on any machin
 
 ## Features
 
-- **No manual login required** - Credentials fetched automatically
+- **No manual login required** - Credentials fetched automatically from assistant-mcp
 - **Multi-account support** - Configure separate instances for different Supabase accounts
-- **Works globally** - Use from any project directory
+- **Works globally** - Use from any project directory on any drive
 - **Cross-platform** - Windows, macOS, Linux
+- **Cross-machine** - Works identically on all computers with the same config
+
+## Installation
+
+### Option 1: Using npx (Recommended)
+
+No installation needed - npx will download and run the package automatically:
+
+```bash
+npx github:mrchevyceleb/supabase-mcp
+```
+
+### Option 2: Clone and Link (Development)
+
+```bash
+git clone https://github.com/mrchevyceleb/supabase-mcp.git
+cd supabase-mcp
+npm install
+npm run build
+npm link
+```
 
 ## Configuration
 
-Add to your `~/.claude.json`:
+Add to your `~/.claude.json` under `globalMcpServers`:
 
 ```json
 {
   "globalMcpServers": {
     "supabase-elite": {
       "command": "npx",
-      "args": ["-y", "@mattjohnston/supabase-mcp"],
+      "args": ["-y", "github:mrchevyceleb/supabase-mcp"],
       "env": {
         "SUPABASE_ACCOUNT": "eliteteam",
-        "MCP_AUTH_TOKEN": "your-auth-token",
+        "MCP_AUTH_TOKEN": "your-mcp-auth-token",
         "ASSISTANT_MCP_URL": "https://assistant-mcp-production.up.railway.app"
       }
     },
     "supabase-personal": {
       "command": "npx",
-      "args": ["-y", "@mattjohnston/supabase-mcp"],
+      "args": ["-y", "github:mrchevyceleb/supabase-mcp"],
       "env": {
         "SUPABASE_ACCOUNT": "personal",
-        "MCP_AUTH_TOKEN": "your-auth-token",
+        "MCP_AUTH_TOKEN": "your-mcp-auth-token",
         "ASSISTANT_MCP_URL": "https://assistant-mcp-production.up.railway.app"
       }
     }
@@ -46,42 +67,146 @@ Add to your `~/.claude.json`:
 
 | Variable | Description |
 |----------|-------------|
-| `SUPABASE_ACCOUNT` | Account identifier (used to fetch credentials) |
-| `MCP_AUTH_TOKEN` | Bearer token for assistant-mcp authentication |
+| `SUPABASE_ACCOUNT` | Account identifier (used to fetch credentials from assistant-mcp as `supabase_{account}`) |
+| `MCP_AUTH_TOKEN` | Bearer token for assistant-mcp authentication (same as your assistant-mcp admin token) |
 | `ASSISTANT_MCP_URL` | URL of the assistant-mcp server |
+
+## Storing Credentials
+
+Before using this MCP, you must store your Supabase access tokens in assistant-mcp.
+
+### Generate Supabase Access Token
+
+1. Go to https://supabase.com/dashboard/account/tokens
+2. Click "Generate New Token"
+3. Give it a name (e.g., "Claude Code - EliteTeam")
+4. Copy the token (you won't see it again!)
+
+### Store in assistant-mcp
+
+Use the admin API or curl to store the credential:
+
+```bash
+curl -X POST https://assistant-mcp-production.up.railway.app/admin/api/credentials \
+  -H "Authorization: Bearer YOUR_MCP_AUTH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service": "supabase_eliteteam",
+    "apiKey": "sbp_your_supabase_access_token",
+    "metadata": {
+      "project_refs": ["project-ref-1", "project-ref-2"],
+      "default_project": "project-ref-1"
+    }
+  }'
+```
+
+Repeat for each account (e.g., `supabase_personal`).
 
 ## Available Tools
 
+All tools are prefixed with the account name (e.g., `eliteteam_db_push`).
+
 ### Migrations
-- `db_push` - Push migrations to remote database
-- `migrations_new` - Create a new migration file
-- `migrations_list` - List migration status
-- `db_diff` - Generate schema diff
+| Tool | Description |
+|------|-------------|
+| `{account}_db_push` | Push migrations to remote database |
+| `{account}_migrations_new` | Create a new migration file |
+| `{account}_migrations_list` | List migration status |
+| `{account}_db_diff` | Generate schema diff |
+| `{account}_migrations_repair` | Repair migration history |
+| `{account}_migrations_squash` | Squash migrations |
 
 ### Edge Functions
-- `functions_deploy` - Deploy edge functions
-- `functions_list` - List deployed functions
+| Tool | Description |
+|------|-------------|
+| `{account}_functions_deploy` | Deploy edge functions |
+| `{account}_functions_list` | List deployed functions |
+| `{account}_functions_delete` | Delete a function |
+| `{account}_functions_new` | Create a new function |
+| `{account}_functions_serve` | Serve functions locally |
 
 ### Type Generation
-- `gen_types` - Generate TypeScript types from schema
+| Tool | Description |
+|------|-------------|
+| `{account}_gen_types` | Generate TypeScript types from schema |
+| `{account}_gen_types_api` | Generate types from OpenAPI spec |
 
 ### Project Management
-- `projects_list` - List all projects in account
-- `link_project` - Link current directory to a project
-- `status` - Show project status
+| Tool | Description |
+|------|-------------|
+| `{account}_projects_list` | List all projects in account |
+| `{account}_link_project` | Link directory to a project |
+| `{account}_status` | Show project status |
+| `{account}_init` | Initialize new Supabase project |
+| `{account}_start` | Start local Supabase stack |
+| `{account}_stop` | Stop local Supabase stack |
+| `{account}_db_reset` | Reset local database |
+| `{account}_db_pull` | Pull remote schema |
+| `{account}_db_dump` | Dump database schema |
+| `{account}_db_lint` | Lint SQL files |
+| `{account}_health` | Check CLI and credentials status |
+| `{account}_refresh_credentials` | Force refresh credentials |
+
+## Usage Examples
+
+```
+# List all EliteTeam projects (from any directory)
+mcp__supabase-elite__eliteteam_projects_list()
+
+# Push migrations from a specific project
+mcp__supabase-elite__eliteteam_db_push({ project_path: "K:/EliteTeam/profit-wizard" })
+
+# Generate types for personal account
+mcp__supabase-personal__personal_gen_types({
+  project_path: "E:/Personal/my-saas",
+  output_path: "src/types/database.ts"
+})
+
+# Check health status
+mcp__supabase-elite__eliteteam_health()
+```
 
 ## Security
 
-- Credentials are encrypted at rest (AES-256-GCM)
+- Credentials are encrypted at rest in assistant-mcp (AES-256-GCM)
 - Fetched over HTTPS with bearer token authentication
 - Never stored locally on disk
-- Access is logged for audit purposes
+- Cached in memory only (5-minute TTL)
+- All credential accesses are logged for audit
 
 ## Prerequisites
 
 - Node.js 18+
 - Supabase CLI installed (`npm install -g supabase`)
-- Credentials stored in assistant-mcp server
+- assistant-mcp running (Railway)
+- Credentials stored in assistant-mcp
+
+## Multi-Computer Setup
+
+Each computer needs:
+
+1. `~/.claude.json` with globalMcpServers config (copy the exact same config)
+2. Supabase CLI installed (`npm install -g supabase`)
+3. Network access to assistant-mcp URL
+
+**That's it!** No per-machine credential setup, no Supabase login required.
+
+## Troubleshooting
+
+### "Credential not found"
+- Ensure credential is stored in assistant-mcp as `supabase_{account}`
+- Check the account name matches your config
+
+### "401 Unauthorized"
+- Verify MCP_AUTH_TOKEN matches your assistant-mcp token
+- Check ASSISTANT_MCP_URL is correct
+
+### "supabase: command not found"
+- Install Supabase CLI: `npm install -g supabase`
+
+### Tools not appearing
+- Restart Claude Code after adding config
+- Check `~/.claude.json` syntax is valid JSON
 
 ## License
 
