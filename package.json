@@ -1,0 +1,45 @@
+{
+  "name": "@mattjohnston/supabase-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Supabase CLI operations with cloud-stored credentials",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "supabase-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "supabase",
+    "cli",
+    "model-context-protocol"
+  ],
+  "author": "Matt Johnston <matt@mattjohnston.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrchevyceleb/supabase-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
