@@ -351,6 +351,39 @@ export function createDatabaseTools() {
     },
 
     /**
+     * Execute SQL against remote database
+     */
+    [`${prefix}_db_execute_sql`]: {
+      description: `Execute a SQL query against the remote Supabase database (${account} account). Use for SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, etc.`,
+      inputSchema: z.object({
+        sql: z.string().describe('SQL query to execute'),
+        project_ref: z
+          .string()
+          .optional()
+          .describe('Supabase project reference ID (uses linked project if not specified)'),
+        project_path: z
+          .string()
+          .optional()
+          .describe('Path to the project directory (defaults to current directory)'),
+      }),
+      handler: async (args: { sql: string; project_ref?: string; project_path?: string }) => {
+        const cmdArgs = ['db', 'execute', '--sql', args.sql];
+
+        if (args.project_ref) {
+          cmdArgs.push('--project-ref', args.project_ref);
+        }
+
+        const result = await runSupabaseCommand(cmdArgs, args.project_path);
+
+        return {
+          account: getAccount(),
+          operation: 'db_execute_sql',
+          ...result,
+        };
+      },
+    },
+
+    /**
      * Refresh credentials
      */
     [`${prefix}_refresh_credentials`]: {

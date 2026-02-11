@@ -149,6 +149,64 @@ export declare function createFunctionsTools(): {
             operation: string;
             note: string;
         }>;
+    } | {
+        description: string;
+        inputSchema: z.ZodObject<{
+            secrets: z.ZodRecord<z.ZodString, z.ZodString>;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            secrets: Record<string, string>;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            secrets: Record<string, string>;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            secrets: Record<string, string>;
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
+            keys_set: string[];
+        }>;
+    } | {
+        description: string;
+        inputSchema: z.ZodObject<{
+            names: z.ZodArray<z.ZodString, "many">;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            names: string[];
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            names: string[];
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            names: string[];
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
+            keys_removed: string[];
+        }>;
     };
 };
 export declare const functionsTools: {
@@ -295,6 +353,64 @@ export declare const functionsTools: {
             account: string;
             operation: string;
             note: string;
+        }>;
+    } | {
+        description: string;
+        inputSchema: z.ZodObject<{
+            secrets: z.ZodRecord<z.ZodString, z.ZodString>;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            secrets: Record<string, string>;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            secrets: Record<string, string>;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            secrets: Record<string, string>;
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
+            keys_set: string[];
+        }>;
+    } | {
+        description: string;
+        inputSchema: z.ZodObject<{
+            names: z.ZodArray<z.ZodString, "many">;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            names: string[];
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            names: string[];
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            names: string[];
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
+            keys_removed: string[];
         }>;
     };
 };

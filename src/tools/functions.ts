@@ -217,6 +217,159 @@ export function createFunctionsTools() {
         };
       },
     },
+
+    /**
+     * Set Edge Function secrets
+     */
+    [`${prefix}_secrets_set`]: {
+      description: `Set one or more secrets for Edge Functions (${account} account). Secrets are available as environment variables in all Edge Functions.`,
+      inputSchema: z.object({
+        secrets: z
+          .record(z.string())
+          .describe('Key-value pairs of secrets to set (e.g., {"API_KEY": "abc123", "DB_URL": "postgres://..."})'),
+        project_ref: z
+          .string()
+          .optional()
+          .describe('Supabase project reference ID (uses linked project if not specified)'),
+        project_path: z
+          .string()
+          .optional()
+          .describe('Path to the project directory (defaults to current directory)'),
+      }),
+      handler: async (args: {
+        secrets: Record<string, string>;
+        project_ref?: string;
+        project_path?: string;
+      }) => {
+        const secretPairs = Object.entries(args.secrets).map(
+          ([key, value]) => `${key}=${value}`
+        );
+        const cmdArgs = ['secrets', 'set', ...secretPairs];
+
+        if (args.project_ref) {
+          cmdArgs.push('--project-ref', args.project_ref);
+        }
+
+        const result = await runSupabaseCommand(cmdArgs, args.project_path);
+
+        return {
+          account: getAccount(),
+          operation: 'secrets_set',
+          keys_set: Object.keys(args.secrets),
+          ...result,
+        };
+      },
+    },
+
+    /**
+     * List Edge Function secrets
+     */
+    [`${prefix}_secrets_list`]: {
+      description: `List all secrets for Edge Functions (${account} account). Shows secret names (values are not displayed for security).`,
+      inputSchema: z.object({
+        project_ref: z
+          .string()
+          .optional()
+          .describe('Supabase project reference ID (uses linked project if not specified)'),
+        project_path: z
+          .string()
+          .optional()
+          .describe('Path to the project directory (defaults to current directory)'),
+      }),
+      handler: async (args: { project_ref?: string; project_path?: string }) => {
+        const cmdArgs = ['secrets', 'list'];
+
+        if (args.project_ref) {
+          cmdArgs.push('--project-ref', args.project_ref);
+        }
+
+        const result = await runSupabaseCommand(cmdArgs, args.project_path);
+
+        return {
+          account: getAccount(),
+          operation: 'secrets_list',
+          ...result,
+        };
+      },
+    },
+
+    /**
+     * Unset (delete) Edge Function secrets
+     */
+    [`${prefix}_secrets_unset`]: {
+      description: `Remove one or more secrets from Edge Functions (${account} account)`,
+      inputSchema: z.object({
+        names: z
+          .array(z.string())
+          .describe('Names of secrets to remove (e.g., ["API_KEY", "DB_URL"])'),
+        project_ref: z
+          .string()
+          .optional()
+          .describe('Supabase project reference ID (uses linked project if not specified)'),
+        project_path: z
+          .string()
+          .optional()
+          .describe('Path to the project directory (defaults to current directory)'),
+      }),
+      handler: async (args: {
+        names: string[];
+        project_ref?: string;
+        project_path?: string;
+      }) => {
+        const cmdArgs = ['secrets', 'unset', ...args.names];
+
+        if (args.project_ref) {
+          cmdArgs.push('--project-ref', args.project_ref);
+        }
+
+        const result = await runSupabaseCommand(cmdArgs, args.project_path);
+
+        return {
+          account: getAccount(),
+          operation: 'secrets_unset',
+          keys_removed: args.names,
+          ...result,
+        };
+      },
+    },
+
+    /**
+     * View Edge Function logs
+     */
+    [`${prefix}_functions_logs`]: {
+      description: `View logs for an Edge Function (${account} account). Shows recent execution logs, errors, and console output.`,
+      inputSchema: z.object({
+        function_name: z.string().describe('Name of the Edge Function to get logs for'),
+        project_ref: z
+          .string()
+          .optional()
+          .describe('Supabase project reference ID (uses linked project if not specified)'),
+        project_path: z
+          .string()
+          .optional()
+          .describe('Path to the project directory (defaults to current directory)'),
+      }),
+      handler: async (args: {
+        function_name: string;
+        project_ref?: string;
+        project_path?: string;
+      }) => {
+        const cmdArgs = ['functions', 'logs', args.function_name];
+
+        if (args.project_ref) {
+          cmdArgs.push('--project-ref', args.project_ref);
+        }
+
+        const result = await runSupabaseCommand(cmdArgs, args.project_path);
+
+        return {
+          account: getAccount(),
+          operation: 'functions_logs',
+          function_name: args.function_name,
+          ...result,
+        };
+      },
+    },
   };
 }
 

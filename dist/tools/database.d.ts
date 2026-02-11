@@ -193,6 +193,34 @@ export declare function createDatabaseTools(): {
         }>;
     } | {
         description: string;
+        inputSchema: z.ZodObject<{
+            sql: z.ZodString;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            sql: string;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            sql: string;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            sql: string;
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
+        }>;
+    } | {
+        description: string;
         inputSchema: z.ZodObject<{}, "strip", z.ZodTypeAny, {}, {}>;
         handler: () => Promise<{
             account: string;
@@ -397,6 +425,34 @@ export declare const databaseTools: {
                 error?: string;
                 project_refs?: string[];
             };
+        }>;
+    } | {
+        description: string;
+        inputSchema: z.ZodObject<{
+            sql: z.ZodString;
+            project_ref: z.ZodOptional<z.ZodString>;
+            project_path: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            sql: string;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }, {
+            sql: string;
+            project_path?: string | undefined;
+            project_ref?: string | undefined;
+        }>;
+        handler: (args: {
+            sql: string;
+            project_ref?: string;
+            project_path?: string;
+        }) => Promise<{
+            success: boolean;
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+            command: string;
+            account: string;
+            operation: string;
         }>;
     } | {
         description: string;
