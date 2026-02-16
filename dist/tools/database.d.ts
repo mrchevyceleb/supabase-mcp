@@ -211,13 +211,35 @@ export declare function createDatabaseTools(): {
             project_ref?: string;
             project_path?: string;
         }) => Promise<{
+            account: string;
+            operation: string;
             success: boolean;
+            error: string;
+            result?: undefined;
+            stdout?: undefined;
+            stderr?: undefined;
+            exitCode?: undefined;
+            command?: undefined;
+        } | {
+            account: string;
+            operation: string;
+            success: boolean;
+            result: any;
             stdout: string;
             stderr: string;
             exitCode: number;
             command: string;
+            error?: undefined;
+        } | {
             account: string;
             operation: string;
+            success: boolean;
+            stdout: string;
+            stderr: any;
+            exitCode: number;
+            command: string;
+            error?: undefined;
+            result?: undefined;
         }>;
     } | {
         description: string;
@@ -446,13 +468,35 @@ export declare const databaseTools: {
             project_ref?: string;
             project_path?: string;
         }) => Promise<{
+            account: string;
+            operation: string;
             success: boolean;
+            error: string;
+            result?: undefined;
+            stdout?: undefined;
+            stderr?: undefined;
+            exitCode?: undefined;
+            command?: undefined;
+        } | {
+            account: string;
+            operation: string;
+            success: boolean;
+            result: any;
             stdout: string;
             stderr: string;
             exitCode: number;
             command: string;
+            error?: undefined;
+        } | {
             account: string;
             operation: string;
+            success: boolean;
+            stdout: string;
+            stderr: any;
+            exitCode: number;
+            command: string;
+            error?: undefined;
+            result?: undefined;
         }>;
     } | {
         description: string;

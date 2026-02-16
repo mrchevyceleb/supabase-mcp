@@ -4,8 +4,10 @@
  * Tools for managing Supabase projects and database operations.
  */
 import { z } from 'zod';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { runSupabaseCommand, checkSupabaseCli } from '../cli-executor.js';
-import { getSupabaseCredentials, clearCredentialsCache } from '../credential-client.js';
+import { getSupabaseCredentials, getAccessToken, clearCredentialsCache } from '../credential-client.js';
 // Get account name at runtime
 function getAccount() {
     return process.env.SUPABASE_ACCOUNT || 'default';
@@ -320,16 +322,77 @@ export function createDatabaseTools() {
                     .describe('Path to the project directory (defaults to current directory)'),
             }),
             handler: async (args) => {
-                const cmdArgs = ['db', 'execute', '--sql', args.sql];
-                if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                // Resolve project ref - explicit arg, or read from linked project
+                let projectRef = args.project_ref;
+                if (!projectRef) {
+                    const projectPath = args.project_path || process.cwd();
+                    try {
+                        projectRef = readFileSync(join(projectPath, 'supabase', '.temp', 'project-ref'), 'utf-8').trim();
+                    }
+                    catch {
+                        return {
+                            account: getAccount(),
+                            operation: 'db_execute_sql',
+                            success: false,
+                            error: 'No project_ref provided and no linked project found. Pass project_ref explicitly or link a project first.',
+                        };
+                    }
                 }
-                const result = await runSupabaseCommand(cmdArgs, args.project_path);
-                return {
-                    account: getAccount(),
-                    operation: 'db_execute_sql',
-                    ...result,
-                };
+                // Use the Supabase Management API to execute SQL
+                const accessToken = await getAccessToken();
+                const url = `https://api.supabase.com/v1/projects/${projectRef}/database/query`;
+                console.error(`[supabase-mcp] Executing SQL via Management API for project ${projectRef}`);
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query: args.sql }),
+                    });
+                    const text = await response.text();
+                    if (!response.ok) {
+                        return {
+                            account: getAccount(),
+                            operation: 'db_execute_sql',
+                            success: false,
+                            stdout: '',
+                            stderr: text,
+                            exitCode: response.status,
+                            command: `Management API POST ${url}`,
+                        };
+                    }
+                    // Try to parse as JSON for pretty output
+                    let result;
+                    try {
+                        result = JSON.parse(text);
+                    }
+                    catch {
+                        result = text;
+                    }
+                    return {
+                        account: getAccount(),
+                        operation: 'db_execute_sql',
+                        success: true,
+                        result,
+                        stdout: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
+                        stderr: '',
+                        exitCode: 0,
+                        command: `Management API POST ${url}`,
+                    };
+                }
+                catch (error) {
+                    return {
+                        account: getAccount(),
+                        operation: 'db_execute_sql',
+                        success: false,
+                        stdout: '',
+                        stderr: error.message,
+                        exitCode: 1,
+                        command: `Management API POST ${url}`,
+                    };
+                }
             },
         },
         /**
