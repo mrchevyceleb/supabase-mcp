@@ -116,6 +116,11 @@ All tools are prefixed with the account name (e.g., `eliteteam_db_push`).
 | `{account}_migrations_repair` | Repair migration history |
 | `{account}_migrations_squash` | Squash migrations |
 
+### Database
+| Tool | Description |
+|------|-------------|
+| `{account}_db_execute_sql` | Execute raw SQL against the remote database (uses Supabase Management API) |
+
 ### Edge Functions
 | Tool | Description |
 |------|-------------|
@@ -191,6 +196,97 @@ Each computer needs:
 
 **That's it!** No per-machine credential setup, no Supabase login required.
 
+## Updating on Other Computers
+
+When the MCP server code is updated (e.g. bug fixes), each computer caches the old version via `npx`. To force an update:
+
+### Step 1: Clear the npx cache
+
+**Windows (Git Bash / PowerShell):**
+```bash
+# Find which npx cache dir has supabase-mcp
+for dir in ~/AppData/Local/npm-cache/_npx/*/; do
+  if grep -ql "supabase-mcp" "$dir/node_modules/.package-lock.json" 2>/dev/null; then
+    echo "Found: $dir"
+    rm -rf "$dir"
+    echo "Deleted!"
+  fi
+done
+```
+
+**macOS / Linux:**
+```bash
+# Find which npx cache dir has supabase-mcp
+for dir in ~/.npm/_npx/*/; do
+  if grep -ql "supabase-mcp" "$dir/node_modules/.package-lock.json" 2>/dev/null; then
+    echo "Found: $dir"
+    rm -rf "$dir"
+    echo "Deleted!"
+  fi
+done
+```
+
+**Nuclear option (clears ALL npx caches):**
+```bash
+npm cache clean --force
+```
+
+### Step 2: Restart Claude Code
+
+Close and reopen Claude Code. The MCP server will re-download the latest version from GitHub on its next start.
+
+### Step 3: Verify
+
+Use the health check tool to confirm the MCP is working:
+```
+mcp__supabase-personal__personal_health()
+```
+
+## Architecture
+
+```
+┌─────────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│   Claude Code       │     │   supabase-mcp        │     │  assistant-mcp  │
+│   (MCP client)      │────▶│   (this package)      │────▶│  (Railway)      │
+│                     │     │                       │     │                 │
+│  Calls tools like   │     │  1. Fetches access    │     │  Stores Supa-   │
+│  personal_db_push   │     │     token from cloud  │     │  base tokens    │
+│  eliteteam_gen_types│     │  2. Runs supabase CLI │     │  encrypted      │
+│  personal_db_execute│     │     with that token   │     │  (AES-256-GCM)  │
+└─────────────────────┘     │  3. Returns results   │     └─────────────────┘
+                            └──────────┬────────────┘
+                                       │
+                            ┌──────────▼────────────┐
+                            │   Supabase CLI         │
+                            │   (installed locally)  │
+                            │                        │
+                            │   Most tools use CLI:  │
+                            │   - functions deploy   │
+                            │   - db push            │
+                            │   - migration list     │
+                            │                        │
+                            │   db_execute_sql uses  │
+                            │   Management API       │
+                            │   directly (no CLI)    │
+                            └────────────────────────┘
+```
+
+### How `db_execute_sql` works
+
+Unlike other tools that shell out to the Supabase CLI, `db_execute_sql` calls the **Supabase Management API** directly:
+
+```
+POST https://api.supabase.com/v1/projects/{project_ref}/database/query
+Authorization: Bearer {supabase_access_token}
+Content-Type: application/json
+
+{"query": "SELECT * FROM auth.users LIMIT 5"}
+```
+
+This is because the Supabase CLI does **not** have a `db execute` command. The Management API endpoint returns JSON results directly.
+
+**Project ref resolution:** If you don't pass `project_ref`, the tool reads it from `{project_path}/supabase/.temp/project-ref` (created when you run `supabase link`).
+
 ## Troubleshooting
 
 ### "Credential not found"
@@ -207,6 +303,19 @@ Each computer needs:
 ### Tools not appearing
 - Restart Claude Code after adding config
 - Check `~/.claude.json` syntax is valid JSON
+
+### `db_execute_sql` returns "unknown flag: --sql"
+- **You are running an old cached version.** Follow the "Updating on Other Computers" steps above to clear the npx cache and restart Claude Code.
+- The old version tried to use `supabase db execute --sql` which doesn't exist in the Supabase CLI. The fix (Feb 2026) switched to the Supabase Management API.
+
+### `db_execute_sql` returns "No project_ref provided"
+- Either pass `project_ref` explicitly, or make sure the project directory has a linked project (`supabase link --project-ref YOUR_REF`)
+
+### `db_execute_sql` returns "spawn cmd.exe ENOENT"
+- Same as the `--sql` error above — old cached version. Clear npx cache and restart.
+
+### Other tools work but `db_execute_sql` doesn't
+- Other tools use the Supabase CLI (which works fine). `db_execute_sql` uses the Management API, which needs a valid access token. Run `{account}_health` to check credentials.
 
 ## License
 
