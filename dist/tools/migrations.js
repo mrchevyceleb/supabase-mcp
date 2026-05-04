@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { runSupabaseCommand } from '../cli-executor.js';
+import { ensureProjectRefIsLinked } from '../project-link.js';
 // Get account name at runtime
 function getAccount() {
     return process.env.SUPABASE_ACCOUNT || 'default';
@@ -40,7 +41,7 @@ export function createMigrationsTools() {
             handler: async (args) => {
                 const cmdArgs = ['db', 'push'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase db push');
                 }
                 if (args.dry_run) {
                     cmdArgs.push('--dry-run');
@@ -97,7 +98,7 @@ export function createMigrationsTools() {
             handler: async (args) => {
                 const cmdArgs = ['migration', 'list'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase migration list');
                 }
                 const result = await runSupabaseCommand(cmdArgs, args.project_path);
                 return {
@@ -133,7 +134,8 @@ export function createMigrationsTools() {
             handler: async (args) => {
                 const cmdArgs = ['db', 'diff'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase db diff');
+                    cmdArgs.push('--linked');
                 }
                 if (args.schema) {
                     cmdArgs.push('--schema', args.schema);
@@ -173,7 +175,7 @@ export function createMigrationsTools() {
             handler: async (args) => {
                 const cmdArgs = ['migration', 'repair', '--status', args.status, args.version];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase migration repair');
                 }
                 const result = await runSupabaseCommand(cmdArgs, args.project_path);
                 return {
@@ -207,7 +209,8 @@ export function createMigrationsTools() {
             handler: async (args) => {
                 const cmdArgs = ['migration', 'squash'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase migration squash');
+                    cmdArgs.push('--linked');
                 }
                 if (args.version) {
                     cmdArgs.push('--version', args.version);

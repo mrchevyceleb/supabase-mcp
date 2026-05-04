@@ -8,6 +8,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { runSupabaseCommand, checkSupabaseCli } from '../cli-executor.js';
 import { getSupabaseCredentials, getAccessToken, clearCredentialsCache } from '../credential-client.js';
+import { ensureProjectRefIsLinked } from '../project-link.js';
 // Get account name at runtime
 function getAccount() {
     return process.env.SUPABASE_ACCOUNT || 'default';
@@ -163,7 +164,7 @@ export function createDatabaseTools() {
             handler: async (args) => {
                 const cmdArgs = ['db', 'pull'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase db pull');
                 }
                 if (args.schema) {
                     cmdArgs.push('--schema', args.schema);
@@ -206,7 +207,7 @@ export function createDatabaseTools() {
             handler: async (args) => {
                 const cmdArgs = ['db', 'dump'];
                 if (args.project_ref) {
-                    cmdArgs.push('--project-ref', args.project_ref);
+                    await ensureProjectRefIsLinked(args.project_ref, args.project_path, 'supabase db dump');
                 }
                 if (args.data_only) {
                     cmdArgs.push('--data-only');
